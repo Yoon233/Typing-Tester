@@ -13,7 +13,7 @@ class typing_tester_app(tk.Tk):
         self.title("Typing Tester")
         self.attributes('-alpha', 0.0) # Making window invisible
         self.is_it_full_screen = False
-        self.default_font = tk.font.Font(family="Iosevka Term", size=14, weight="normal")
+        self.default_font = tk.font.Font(family="Iosevka Term", size=25, weight="normal")
         
         # pywinstyles.apply_style(self, "acrylic") # Theme 
         print(f"Theme: {darkdetect.theme()}")
@@ -39,7 +39,6 @@ class typing_tester_app(tk.Tk):
 
         self.attributes('-alpha', 1.0) # Making window visiable
         self.bind("<Escape>", self.make_full_screen)
-
 
     def show_frame(self, cont): # Display a certain frame to this window
         frame = self.frames[cont]
@@ -71,6 +70,16 @@ class typing_tester_app(tk.Tk):
             self.geometry(f'{width}x{height}+{x}+{y}')
             self.deiconify()
                
+    def end_app(self, code):
+        if code == 0:
+            print("Successfully exit the program")
+            self.destroy()
+            return 0
+        else:
+            print(f"Exit the program with an error: Error code = {code}")
+            self.destroy()
+            return 1
+        
 class WelcomePage(tk.Frame):
     def __init__(self, parent, controller):
         
@@ -103,7 +112,6 @@ class MainPage(tk.Frame):
         
         tk.Frame.__init__(self, parent)
         
-        
         self.cursor_position = 1
         self.grid(column=0, row=0, sticky="nsew")
         self.columnconfigure(0, weight=1)
@@ -114,25 +122,25 @@ class MainPage(tk.Frame):
         self.rowconfigure(2, weight=1)
         self.rowconfigure(3, weight=1)
         
-        full_screen = tk.Label(self, text='Press ESC to make it full screen', bd=4, font=controller.default_font)
+        full_screen = tk.Label(self, text='Press ESC to make it full screen', bd=4, font=("Iosevka Term", 14))
         full_screen.grid(column=0, row=0, sticky="WN")
         
-        self.list1 = tk.Label(self, text="Start", bd = 4, font=("Iosevka Term", 25), fg='black')
+        self.list1 = tk.Label(self, text="Start", bd = 4, font=controller.default_font, fg='black')
         self.list1.grid(column=0, row=1, sticky='N')
         
-        self.list2 = tk.Label(self, text="See Record", bd = 4, font=("Iosevka Term", 25), fg='black')
+        self.list2 = tk.Label(self, text="See Record", bd = 4, font=controller.default_font, fg='black')
         self.list2.grid(column=0, row=2, sticky='N')
         
-        self.list3 = tk.Label(self, text="Exit", bd = 4, font=("Iosevka Term", 25), fg='black')
+        self.list3 = tk.Label(self, text="Exit", bd = 4, font=controller.default_font, fg='black')
         self.list3.grid(column=0, row=3, sticky='N')
         
         self.update_cursor()
         
         self.bind("<Up>", self.selectUpward)
         self.bind("<Down>", self.selectDownward)
+        self.bind("<Return>", lambda event: self.selectOption(event, controller))
                   
     def selectUpward(self, event):
-        print("cursor position = ",self.cursor_position)
         if self.cursor_position == 1:
             self.not_allowed_move(self.list1, "black")
         elif self.cursor_position == 2:
@@ -142,9 +150,9 @@ class MainPage(tk.Frame):
         else:
             print(f"selectUpward: cursor_position is not in the normal range. cursor_position(1-3) = {self.cursor_position}")
         self.update_cursor()
+        print("cursor_position = ",self.cursor_position)
         
     def selectDownward(self, event):
-        print("cursor position = ", self.cursor_position)
         if self.cursor_position == 1:
             self.cursor_position = 2
         elif self.cursor_position == 2:
@@ -154,6 +162,17 @@ class MainPage(tk.Frame):
         else:
             print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {self.cursor_position}")
         self.update_cursor()
+        print("cursor_position = ", self.cursor_position)
+        
+    def selectOption(self, event, controller):
+        if self.cursor_position == 1:
+            controller.show_frame(TestPage)
+        elif self.cursor_position == 2:
+            controller.show_frame(RecordPage)
+        elif self.cursor_position == 3:
+            controller.end_app(0)
+        else:
+            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {self.cursor_position}")
         
     def not_allowed_move(self, label, original_colour):
         label.config(fg='red')
@@ -172,7 +191,15 @@ class MainPage(tk.Frame):
             self.list2.config(fg="green")
         elif self.cursor_position == 3:
             self.list3.config(fg="green")
-            
+    
+class TestPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Tk.__init__(self, parent)
+        
+class RecordPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Tk.__init__(self, parent)
+       
 if __name__ == '__main__': # Only runs if this file is executed directly.
     startapp = typing_tester_app()
     startapp.mainloop()
