@@ -93,11 +93,11 @@ class WelcomePage(tk.Frame):
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         
-        title = tk.Label(self, text='Typing Tester', bd=4, font=("Iosevka Term", 25), fg='green')
+        title = tk.Label(self, text='Typing Tester', bd=4, font=controller.default_font, fg='green')
         title.grid(column=0, row=0, sticky="S")
-        explaination = tk.Label(self, text='Press Any Button to Start', bd=4, font=("Iosevka Term", 20))
+        explaination = tk.Label(self, text='Press Any Button to Start', bd=4, font=controller.default_font)
         explaination.grid(column=0, row=1, sticky="N")
-        full_screen = tk.Label(self, text='Press ESC to make it full screen', bd=4, font=controller.default_font)
+        full_screen = tk.Label(self, text='Press ESC to make it full screen', bd=4, font=("Iosevka Term", 14))
         full_screen.grid(column=0, row=0, sticky="WN")
         
         self.bind("<Key>", lambda event: self.on_key_press(event, controller))
