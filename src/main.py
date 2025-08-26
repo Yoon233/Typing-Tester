@@ -1,11 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
 import tkinter.font
-import pywinstyles, sys
+import pywinstyles, sys # Window style
 import sv_ttk # Sun Valley ttk theme
 import darkdetect # Dark Mode detection
+import os # Reading the file names
+import time
 
-class typing_tester_app(tk.Tk):
+class typing_tester_app(tkinter.Tk):
     def __init__(self, *args, **kwargs):
         
         tk.Tk.__init__(self, *args, **kwargs)
@@ -18,6 +20,7 @@ class typing_tester_app(tk.Tk):
         # pywinstyles.apply_style(self, "acrylic") # Theme 
         print(f"Theme: {darkdetect.theme()}")
         sv_ttk.set_theme(darkdetect.theme())
+        self.theme = darkdetect.theme()
         
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
@@ -55,7 +58,7 @@ class typing_tester_app(tk.Tk):
         else:
             print(f"Something went wrong: keysym{event.keysym}, is_it_full_screen = {self.is_it_full_screen}")
         
-    def center_the_window(self): #center the window
+    def center_the_window(self): # Center the window
             self.update_idletasks()
                 
             width = self.winfo_width()
@@ -70,7 +73,7 @@ class typing_tester_app(tk.Tk):
             self.geometry(f'{width}x{height}+{x}+{y}')
             self.deiconify()
                
-    def end_app(self, code):
+    def end_app(self, code): # Destroy the main window and exit program, (Return 0 for the successful exit, else is error)
         if code == 0:
             print("Successfully exit the program")
             self.destroy()
@@ -142,7 +145,7 @@ class MainPage(tk.Frame):
                   
     def selectUpward(self, event):
         if self.cursor_position == 1:
-            self.not_allowed_move(self.list1, "black")
+            pass
         elif self.cursor_position == 2:
             self.cursor_position = 1
         elif self.cursor_position == 3:
@@ -158,7 +161,7 @@ class MainPage(tk.Frame):
         elif self.cursor_position == 2:
             self.cursor_position = 3
         elif self.cursor_position == 3:
-            self.not_allowed_move(self.list1, "black")
+            pass
         else:
             print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {self.cursor_position}")
         self.update_cursor()
@@ -173,10 +176,6 @@ class MainPage(tk.Frame):
             controller.end_app(0)
         else:
             print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {self.cursor_position}")
-        
-    def not_allowed_move(self, label, original_colour):
-        label.config(fg='red')
-        label.after(2000, lambda: label.config(fg=original_colour))
         
     def update_cursor(self):
         # reset all
@@ -194,10 +193,68 @@ class MainPage(tk.Frame):
     
 class TestPage(tk.Frame):
     def __init__(self, parent, controller):
+        
         tk.Tk.__init__(self, parent)
         
-class RecordPage(tk.Frame):
-    def __init__(self, parent, controller):
+        self.correct_words = 0
+        
+        self.total_words = 0
+        self.total_charecters = 0
+        
+        self.wrong_words = 0
+        self.wrong_characters = 0
+
+        self.time = 0
+        self.cpm = 0
+        self.wpm = 0
+        
+    def read_file_name(dir_path): # Reads all the names of the files in a certain directory, Returns a list of the name
+        try:
+            file_name_list = []
+            file_name_list = os.listdir(dir_path)
+        except FileNotFoundError:
+            print(f"Error: Cannot find any file in {dir_path}")
+            return 1
+        
+        return file_name_list
+            
+    def read_file_content(file_path): # Reads all the content inside of the file, Returns a list of words in the file, returns 1 when it is failed to extracts words.
+        try:
+            words_list = []
+            f = open(file_path, "rt")
+            file = f.read()
+            print(f.read())
+            # Make the f.read() retuns into a list
+            f.close()
+            return words_list
+            
+        except FileNotFoundError:
+            print(f"Error: Cannot find any file{file_path} in ")
+            f.close()
+            return 1
+            
+    def is_it_correct(self, controller, input, answer):
+        if input == answer:
+            print("Correct!")
+            self.correct_words += 1
+        else:
+            print("Wrong!")
+            self.wrong_words += 1
+            input_letters = list(input)
+            answer_letters = list(answer)
+            
+            for i in range(len(answer_letters)):
+                if input_letters[i] == answer_letters[i]:
+                    controller.correct_characters += 1
+                else:
+                    controller.wrong_characters += 1
+                    
+        controller.total_characters += len(list(input))
+        controller.total_words += 1
+                
+    def save_record(self):
+                     
+#
         tk.Tk.__init__(self, parent)
        
 if __name__ == '__main__': # Only runs if this file is executed directly.
