@@ -82,7 +82,55 @@ class typing_tester_app(tkinter.Tk):
             print(f"Exit the program with an error: Error code = {code}")
             self.destroy()
             return 1
+
+    def selectUpward(self, labels ,cursor_position):
+        if cursor_position == 1:
+            pass
+        elif cursor_position == 2:
+            cursor_position = 1
+        elif cursor_position == 3:
+            cursor_position = 2
+        else:
+            print(f"selectUpward: cursor_position is not in the normal range. cursor_position(1-3) = {cursor_position}")
+        self.update_cursor(labels, cursor_position)
+        print("cursor_position = ", cursor_position)
         
+    def selectDownward(self, labels, cursor_position):
+        if cursor_position == 1:
+            cursor_position = 2
+        elif cursor_position == 2:
+            cursor_position = 3
+        elif cursor_position == 3:
+            pass
+        else:
+            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {cursor_position}")
+        self.update_cursor(labels, cursor_position)
+        print("cursor_position = ", cursor_position)
+        
+    def selectOption(self, cursor_position):
+        if cursor_position == 1:
+            self.show_frame(FilePage)
+        elif cursor_position == 2:
+            self.show_frame(RecordPage)
+        elif cursor_position == 3:
+            self.end_app(0)
+        else:
+            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {cursor_position}")
+        
+    def update_cursor(self, labels, cursor_position):
+        # reset all
+        labels[0].config(fg="black")
+        labels[1].config(fg="black")
+        labels[2].config(fg="black")
+        
+        #Highlight the selected option
+        if cursor_position == 1:
+            labels[0].config(fg="green")
+        elif cursor_position == 2:
+            labels[1].config(fg="green")
+        elif cursor_position == 3:
+            labels[2].config(fg="green")
+       
 class WelcomePage(tk.Frame):
     def __init__(self, parent, controller):
         
@@ -128,73 +176,32 @@ class MainPage(tk.Frame):
         full_screen = tk.Label(self, text='Press ESC to make it full screen', bd=4, font=("Iosevka Term", 14))
         full_screen.grid(column=0, row=0, sticky="WN")
         
-        self.list1 = tk.Label(self, text="Start", bd = 4, font=controller.default_font, fg='black')
-        self.list1.grid(column=0, row=1, sticky='N')
+        self.labels = []
         
-        self.list2 = tk.Label(self, text="See Record", bd = 4, font=controller.default_font, fg='black')
-        self.list2.grid(column=0, row=2, sticky='N')
+        self.labels.append(tk.Label(self, text="Start", bd = 4, font=controller.default_font, fg='black'))
+        self.labels[-1].grid(column=0, row=1, sticky='N')
         
-        self.list3 = tk.Label(self, text="Exit", bd = 4, font=controller.default_font, fg='black')
-        self.list3.grid(column=0, row=3, sticky='N')
+        self.labels.append(tk.Label(self, text="See Record", bd = 4, font=controller.default_font, fg='black'))
+        self.labels[-1].grid(column=0, row=2, sticky='N')
         
-        self.update_cursor()
+        self.labels.append(tk.Label(self, text="Exit", bd = 4, font=controller.default_font, fg='black'))
+        self.labels[-1].grid(column=0, row=3, sticky='N')
         
-        self.bind("<Up>", self.selectUpward)
-        self.bind("<Down>", self.selectDownward)
-        self.bind("<Return>", lambda event: self.selectOption(event, controller))
-                  
-    def selectUpward(self, event):
-        if self.cursor_position == 1:
-            pass
-        elif self.cursor_position == 2:
-            self.cursor_position = 1
-        elif self.cursor_position == 3:
-            self.cursor_position = 2
-        else:
-            print(f"selectUpward: cursor_position is not in the normal range. cursor_position(1-3) = {self.cursor_position}")
-        self.update_cursor()
-        print("cursor_position = ",self.cursor_position)
+        controller.update_cursor(self.labels, self.cursor_position)
         
-    def selectDownward(self, event):
-        if self.cursor_position == 1:
-            self.cursor_position = 2
-        elif self.cursor_position == 2:
-            self.cursor_position = 3
-        elif self.cursor_position == 3:
-            pass
-        else:
-            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {self.cursor_position}")
-        self.update_cursor()
-        print("cursor_position = ", self.cursor_position)
-        
-    def selectOption(self, event, controller):
-        if self.cursor_position == 1:
-            controller.show_frame(TestPage)
-        elif self.cursor_position == 2:
-            controller.show_frame(RecordPage)
-        elif self.cursor_position == 3:
-            controller.end_app(0)
-        else:
-            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {self.cursor_position}")
-        
-    def update_cursor(self):
-        # reset all
-        self.list1.config(fg="black")
-        self.list2.config(fg="black")
-        self.list3.config(fg="black")
-        
-        #Highlight the selected option
-        if self.cursor_position == 1:
-            self.list1.config(fg="green")
-        elif self.cursor_position == 2:
-            self.list2.config(fg="green")
-        elif self.cursor_position == 3:
-            self.list3.config(fg="green")
-    
-class TestPage(tk.Frame):
+        self.bind("<Up>", lambda event: controller.selectUpward(self.labels, self.cursor_position))
+        self.bind("<Down>", lambda event: controller.selectDownward(self.labels, self.cursor_position))
+        self.bind("<Return>", lambda event: controller.selectOption(self.cursor_position))
+                   
+class FilePage(tk.Frame):
     def __init__(self, parent, controller):
         
         tk.Tk.__init__(self, parent)
+        self.FileNameList = self.read_file_names()
+        
+        if self.FileNameList == None:
+            print("File Not Found")
+            self.destroy()
         
         self.correct_words = 0
         
@@ -208,13 +215,44 @@ class TestPage(tk.Frame):
         self.cpm = 0
         self.wpm = 0
         
-    def read_file_name(dir_path): # Reads all the names of the files in a certain directory, Returns a list of the name
+        self.grid(column=0, row=0, sticky="nsew")
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+        self.rowconfigure(3, weight=1)
+        
+        fileNumber = 0
+        fileLabels_display_limit = 0
+        
+        for self.file_name in self.FileNameList:
+        
+            self.fileLabels[fileNumber] = tk.Label(text=self.file_name, font=controller.defualt_font)
+            self.fileLabels[fileNumber].attributes('-alpha', 0.0)
+                
+            self.fileLabels[fileNumber].grid( colum=0, row= fileNumber - (3 * fileLabels_display_limit) )
+            
+            fileNumber += 1
+            
+            if ( fileNumber % 3 ) == 0:
+                fileLabels_display_limit += 1
+            
+        fileLabels_display_limit = 0
+        
+        
+
+        
+            
+        
+    def read_file_names(dir_path): # Reads all the names of the files in a certain directory, Returns a list of the name
         try:
             file_name_list = []
             file_name_list = os.listdir(dir_path)
         except FileNotFoundError:
             print(f"Error: Cannot find any file in {dir_path}")
-            return 1
+            return None
         
         return file_name_list
             
@@ -253,9 +291,7 @@ class TestPage(tk.Frame):
         controller.total_words += 1
                 
     def save_record(self):
-                     
-#
-        tk.Tk.__init__(self, parent)
+        pass
        
 if __name__ == '__main__': # Only runs if this file is executed directly.
     startapp = typing_tester_app()
