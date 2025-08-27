@@ -73,7 +73,7 @@ class typing_tester_app(tkinter.Tk):
             self.geometry(f'{width}x{height}+{x}+{y}')
             self.deiconify()
                
-    def end_app(self, code): # Destroy the main window and exit program, (Return 0 for the successful exit, else is error)
+    def end_app(self, code, event=None): # Destroy the main window and exit program, (Return 0 for the successful exit, else is error)
         if code == 0:
             print("Successfully exit the program")
             self.destroy()
@@ -83,53 +83,54 @@ class typing_tester_app(tkinter.Tk):
             self.destroy()
             return 1
 
-    def selectUpward(self, labels ,cursor_position):
-        if cursor_position == 1:
+    def selectUpward(self, Page, event = None):
+        if Page.cursor_position == 1:
             pass
-        elif cursor_position == 2:
-            cursor_position = 1
-        elif cursor_position == 3:
-            cursor_position = 2
+        elif Page.cursor_position == 2:
+            Page.cursor_position = 1
+        elif Page.cursor_position == 3:
+            Page.cursor_position = 2
         else:
-            print(f"selectUpward: cursor_position is not in the normal range. cursor_position(1-3) = {cursor_position}")
-        self.update_cursor(labels, cursor_position)
-        print("cursor_position = ", cursor_position)
+            print(f"selectUpward: cursor_position is not in the normal range. cursor_position(1-3) = {Page.cursor_position}")
         
-    def selectDownward(self, labels, cursor_position):
-        if cursor_position == 1:
-            cursor_position = 2
-        elif cursor_position == 2:
-            cursor_position = 3
-        elif cursor_position == 3:
+        print("cursor_position = ", Page.cursor_position)
+        self.update_cursor(Page = Page)
+        
+    def selectDownward(self, Page, event = None):
+        if Page.cursor_position == 1:
+            Page.cursor_position = 2
+        elif Page.cursor_position == 2:
+            Page.cursor_position = 3
+        elif Page.cursor_position == 3:
             pass
         else:
-            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {cursor_position}")
-        self.update_cursor(labels, cursor_position)
-        print("cursor_position = ", cursor_position)
+            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {Page.cursor_position}")
+        print("cursor_position = ", Page.cursor_position)
+        self.update_cursor(Page = Page)
         
-    def selectOption(self, cursor_position):
-        if cursor_position == 1:
+    def selectOption(self, Page, event = None):
+        if Page.cursor_position == 1:
             self.show_frame(FilePage)
-        elif cursor_position == 2:
+        elif Page.cursor_position == 2:
             self.show_frame(RecordPage)
-        elif cursor_position == 3:
+        elif Page.cursor_position == 3:
             self.end_app(0)
         else:
-            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {cursor_position}")
+            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {Page.cursor_position}")
         
-    def update_cursor(self, labels, cursor_position):
+    def update_cursor(self, Page, event = None):
         # reset all
-        labels[0].config(fg="black")
-        labels[1].config(fg="black")
-        labels[2].config(fg="black")
+        Page.labels[0].config(fg="black")
+        Page.labels[1].config(fg="black")
+        Page.labels[2].config(fg="black")
         
         #Highlight the selected option
-        if cursor_position == 1:
-            labels[0].config(fg="green")
-        elif cursor_position == 2:
-            labels[1].config(fg="green")
-        elif cursor_position == 3:
-            labels[2].config(fg="green")
+        if Page.cursor_position == 1:
+            Page.labels[0].config(fg="green")
+        elif Page.cursor_position == 2:
+            Page.labels[1].config(fg="green")
+        elif Page.cursor_position == 3:
+            Page.labels[2].config(fg="green")
        
 class WelcomePage(tk.Frame):
     def __init__(self, parent, controller):
@@ -187,11 +188,11 @@ class MainPage(tk.Frame):
         self.labels.append(tk.Label(self, text="Exit", bd = 4, font=controller.default_font, fg='black'))
         self.labels[-1].grid(column=0, row=3, sticky='N')
         
-        controller.update_cursor(self.labels, self.cursor_position)
+        controller.update_cursor(Page = self)
         
-        self.bind("<Up>", lambda event: controller.selectUpward(self.labels, self.cursor_position))
-        self.bind("<Down>", lambda event: controller.selectDownward(self.labels, self.cursor_position))
-        self.bind("<Return>", lambda event: controller.selectOption(self.cursor_position))
+        self.bind("<Up>", lambda event: controller.selectUpward(self))
+        self.bind("<Down>", lambda event: controller.selectDownward(self))
+        self.bind("<Return>", lambda event: controller.selectOption(self))
                    
 class FilePage(tk.Frame):
     def __init__(self, parent, controller):
@@ -240,11 +241,6 @@ class FilePage(tk.Frame):
                 fileLabels_display_limit += 1
             
         fileLabels_display_limit = 0
-        
-        
-
-        
-            
         
     def read_file_names(dir_path): # Reads all the names of the files in a certain directory, Returns a list of the name
         try:
