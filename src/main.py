@@ -85,7 +85,7 @@ class typing_tester_app(tkinter.Tk):
             self.destroy()
             return 1
 
-    def selectUpward(self, Page, event = None):
+    def selectUpward(self, Page, event = None): # Move a cursor of the page upward
         if Page.cursor_position == 1:
             if Page.multiple_page == True and Page.page != 1:
                 Page.page_number -= 1
@@ -100,7 +100,7 @@ class typing_tester_app(tkinter.Tk):
         print("cursor_position = ", Page.cursor_position)
         self.update_cursor(Page = Page)
         
-    def selectDownward(self, Page, event = None):
+    def selectDownward(self, Page, event = None): # Move a cursor of the page downward
         if Page.cursor_position == 1:
             Page.cursor_position = 2
         elif Page.cursor_position == 2:
@@ -113,16 +113,6 @@ class typing_tester_app(tkinter.Tk):
             print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {Page.cursor_position}")
         print("cursor_position = ", Page.cursor_position)
         self.update_cursor(Page = Page)
-        
-    def selectOption(self, Page, event = None):
-        if Page.cursor_position == 1:
-            self.show_frame(FilePage)
-        elif Page.cursor_position == 2:
-            self.show_frame(RecordPage)
-        elif Page.cursor_position == 3:
-            self.end_app(0)
-        else:
-            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {Page.cursor_position}")
         
     def update_cursor(self, Page, event = None):
         # reset all
@@ -197,8 +187,18 @@ class MainPage(tk.Frame):
         
         self.bind("<Up>", lambda event: controller.selectUpward(self))
         self.bind("<Down>", lambda event: controller.selectDownward(self))
-        self.bind("<Return>", lambda event: controller.selectOption(self))
-                   
+        self.bind("<Return>", lambda event: self.selectOption(controller, event))
+
+    def selectOption(self, controller, event = None):
+        if self.cursor_position == 1:
+            controller.show_frame(FilePage)
+        elif self.cursor_position == 2:
+            controller.show_frame(RecordPage)
+        elif self.cursor_position == 3:
+            controller.end_app(0)
+        else:
+            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {self.cursor_position}")
+
 class FilePage(tk.Frame):
     def __init__(self, parent, controller):
         
@@ -249,7 +249,7 @@ class FilePage(tk.Frame):
                 self.FileNameList.append("Empty")
         
         for self.file_name in self.FileNameList:
-            print("Creating label for:", self.file_name) 
+            print("Creating label for: FilePage.", self.file_name) 
             
             if self.file_name == None:
                 self.file_name = "None: File Not Found"
@@ -274,7 +274,7 @@ class FilePage(tk.Frame):
         
         self.bind("<Up>", lambda event: controller.selectUpward(self))
         self.bind("<Down>", lambda event: controller.selectDownward(self))
-        self.bind("<Return>", lambda event: controller.selectOption(self))
+        self.bind("<Return>", lambda event: self.selectOption(controller, event))
                 
     def read_file_names(self): # Reads all the names of the files in a certain directory, Returns a list of the names of the files
         try:
@@ -325,7 +325,15 @@ class FilePage(tk.Frame):
                 
     def save_record(self):
         pass
-       
+
+    def selectOption(self, controller, event = None):
+        if self.cursor_position >= 1 and self.cursor_position <=3:
+            controller.loaded_file = self.labels[ ( self.cursor_position - 1 ) + (3 * self.page) ].cget("text")
+            print(controller.loaded_file)
+            controller.show_frame(FilePage)
+        else:
+            print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {self.cursor_position}")
+
 if __name__ == '__main__': # Only runs if this file is executed directly.
     startapp = typing_tester_app()
     startapp.mainloop()
