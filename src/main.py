@@ -6,6 +6,8 @@ import sv_ttk # Sun Valley ttk theme
 import darkdetect # Dark Mode detection
 import os # Reading the file names
 import time
+from pathlib import Path
+# from statistics import mean
 
 class typing_tester_app(tkinter.Tk):
     def __init__(self, *args, **kwargs):
@@ -29,7 +31,7 @@ class typing_tester_app(tkinter.Tk):
         
         self.frames = {}
         
-        for F in (WelcomePage, MainPage): # Initiallizing all the pages in the app
+        for F in (WelcomePage, MainPage, FilePage,): # Initiallizing all the pages in the app
             
             frame = F(container, self)
             self.frames[F] = frame
@@ -85,6 +87,8 @@ class typing_tester_app(tkinter.Tk):
 
     def selectUpward(self, Page, event = None):
         if Page.cursor_position == 1:
+            if Page.multiple_page == True and Page.page != 1:
+                Page.page_number -= 1
             pass
         elif Page.cursor_position == 2:
             Page.cursor_position = 1
@@ -102,6 +106,8 @@ class typing_tester_app(tkinter.Tk):
         elif Page.cursor_position == 2:
             Page.cursor_position = 3
         elif Page.cursor_position == 3:
+            if Page.multiple_page == True and Page.page_number != Page.page:
+                Page.page_number += 1
             pass
         else:
             print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {Page.cursor_position}")
@@ -120,18 +126,16 @@ class typing_tester_app(tkinter.Tk):
         
     def update_cursor(self, Page, event = None):
         # reset all
-        Page.labels[0].config(fg="black")
-        Page.labels[1].config(fg="black")
-        Page.labels[2].config(fg="black")
+        for i in range(3):
+            Page.labels[ i + (3 * Page.page) ].grid() # Shows the labels which were hidden because it was not in the specific page.
         
+        for i in range(3):
+            Page.labels[ i + (3 * Page.page) ].config(fg="black")
+            
         #Highlight the selected option
-        if Page.cursor_position == 1:
-            Page.labels[0].config(fg="green")
-        elif Page.cursor_position == 2:
-            Page.labels[1].config(fg="green")
-        elif Page.cursor_position == 3:
-            Page.labels[2].config(fg="green")
-       
+        Page.labels[ ( Page.cursor_position - 1 ) + (3 * Page.page) ].config(fg="green") 
+
+                
 class WelcomePage(tk.Frame):
     def __init__(self, parent, controller):
         
@@ -163,6 +167,7 @@ class MainPage(tk.Frame):
     def __init__(self, parent, controller):
         
         tk.Frame.__init__(self, parent)
+        self.page = 0
         
         self.cursor_position = 1
         self.grid(column=0, row=0, sticky="nsew")
@@ -177,7 +182,7 @@ class MainPage(tk.Frame):
         full_screen = tk.Label(self, text='Press ESC to make it full screen', bd=4, font=("Iosevka Term", 14))
         full_screen.grid(column=0, row=0, sticky="WN")
         
-        self.labels = []
+        self.labels = []        
         
         self.labels.append(tk.Label(self, text="Start", bd = 4, font=controller.default_font, fg='black'))
         self.labels[-1].grid(column=0, row=1, sticky='N')
@@ -197,8 +202,10 @@ class MainPage(tk.Frame):
 class FilePage(tk.Frame):
     def __init__(self, parent, controller):
         
-        tk.Tk.__init__(self, parent)
+        tk.Frame.__init__(self, parent)
         self.FileNameList = self.read_file_names()
+        self.cursor_position = 1
+        self.multiple_page = True # Showing that this frame has multiple pages
         
         if self.FileNameList == None:
             print("File Not Found")
@@ -225,26 +232,56 @@ class FilePage(tk.Frame):
         self.rowconfigure(2, weight=1)
         self.rowconfigure(3, weight=1)
         
+        full_screen = tk.Label(self, text='Press ESC to make it full screen', bd=4, font=("Iosevka Term", 14))
+        full_screen.grid(column=0, row=0, sticky="WN")
+        
         fileNumber = 0
-        fileLabels_display_limit = 0
+        page_number = 0 # starting from 0
+        
+        self.labels = []
+        
+        # Pad FileNameList so that its length is a multiple of 3.
+        # This ensures that the last page will always have exactly 3 items,
+        # which prevents index errors when displaying labels for each page.
+        # "Empty" is used as a placeholder for missing files.
+        if len(self.FileNameList) % 3 != 0:
+            for i in range( 3 - (len(self.FileNameList) % 3 )):
+                self.FileNameList.append("Empty")
         
         for self.file_name in self.FileNameList:
+            print("Creating label for:", self.file_name) 
+            
+            if self.file_name == None:
+                self.file_name = "None: File Not Found"
+            
+            if ( fileNumber % 3 ) == 0 and fileNumber != 0:
+                page_number += 1
         
-            self.fileLabels[fileNumber] = tk.Label(text=self.file_name, font=controller.defualt_font)
-            self.fileLabels[fileNumber].attributes('-alpha', 0.0)
-                
-            self.fileLabels[fileNumber].grid( colum=0, row= fileNumber - (3 * fileLabels_display_limit) )
+            self.labels.append(tk.Label(self, text=self.file_name, font=controller.default_font))
+            self.labels[-1].grid( column=0, row= fileNumber - (3 * page_number) + 1, sticky="N") # Place the label in where no label of the same page never placed
+            self.labels[-1].grid_remove() # Hide the label
             
             fileNumber += 1
             
-            if ( fileNumber % 3 ) == 0:
-                fileLabels_display_limit += 1
-            
-        fileLabels_display_limit = 0
+            # if fileNumber % 3 != 0:
+            #     page_number = ( fileNumber // 3 ) + 1
+            # else:
+            #     page_number = ( fileNumber // 3 )
         
-    def read_file_names(dir_path): # Reads all the names of the files in a certain directory, Returns a list of the name
+        self.page = 0
+            
+        controller.update_cursor(Page = self)
+        
+        self.bind("<Up>", lambda event: controller.selectUpward(self))
+        self.bind("<Down>", lambda event: controller.selectDownward(self))
+        self.bind("<Return>", lambda event: controller.selectOption(self))
+                
+    def read_file_names(self): # Reads all the names of the files in a certain directory, Returns a list of the names of the files
         try:
             file_name_list = []
+            base_dir = Path(__file__).parent.parent
+            dir_path = base_dir / "tests"
+            print(dir_path)
             file_name_list = os.listdir(dir_path)
         except FileNotFoundError:
             print(f"Error: Cannot find any file in {dir_path}")
