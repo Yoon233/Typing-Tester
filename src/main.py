@@ -87,8 +87,9 @@ class typing_tester_app(tkinter.Tk):
 
     def selectUpward(self, Page, event = None): # Move a cursor of the page upward
         if Page.cursor_position == 1:
-            if Page.multiple_page == True and Page.page != 1:
-                Page.page_number -= 1
+            if Page.multiple_page == True and Page.page != 0:
+                Page.page -= 1
+                Page.cursor_position = 3
             pass
         elif Page.cursor_position == 2:
             Page.cursor_position = 1
@@ -106,8 +107,9 @@ class typing_tester_app(tkinter.Tk):
         elif Page.cursor_position == 2:
             Page.cursor_position = 3
         elif Page.cursor_position == 3:
-            if Page.multiple_page == True and Page.page_number != Page.page:
-                Page.page_number += 1
+            if Page.multiple_page == True and Page.max_page != Page.page:
+                Page.page += 1
+                Page.cursor_position = 1
             pass
         else:
             print(f"selectDownward: cursor_position is not in the normal range. cursor_position(1-3) = {Page.cursor_position}")
@@ -118,19 +120,26 @@ class typing_tester_app(tkinter.Tk):
         # reset all
         for i in range(3):
             Page.labels[ i + (3 * Page.page) ].grid() # Shows the labels which were hidden because it was not in the specific page.
+            
+        if Page.multiple_page == True: # If this page has multiple pages, it checks there is any 
+            if Page.cursor_position == 1 and Page.page != 0:
+                for i in range(3):
+                    Page.labels[ i + (3 * (Page.page - 1 )) ].grid_remove()
+                    
+            elif Page.cursor_position == 3 and Page.page == : ################################################################## I need to find the pattern when it changes the page from the lower page to higher page.
+                for i in range(3):
+                    Page.labels[ i + (3 * (Page.page + 1 )) ].grid_remove()
         
         for i in range(3):
             Page.labels[ i + (3 * Page.page) ].config(fg="black")
             
         #Highlight the selected option
         Page.labels[ ( Page.cursor_position - 1 ) + (3 * Page.page) ].config(fg="green") 
-
-                
+           
 class WelcomePage(tk.Frame):
     def __init__(self, parent, controller):
         
         tk.Frame.__init__(self, parent )
-        
         
         self.grid(column=0, row=0, sticky="nsew")
         self.columnconfigure(0, weight=1)
@@ -236,7 +245,7 @@ class FilePage(tk.Frame):
         full_screen.grid(column=0, row=0, sticky="WN")
         
         fileNumber = 0
-        page_number = 0 # starting from 0
+        self.max_page = 0 # starting from 0
         
         self.labels = []
         
@@ -255,10 +264,10 @@ class FilePage(tk.Frame):
                 self.file_name = "None: File Not Found"
             
             if ( fileNumber % 3 ) == 0 and fileNumber != 0:
-                page_number += 1
+                self.max_page += 1
         
             self.labels.append(tk.Label(self, text=self.file_name, font=controller.default_font))
-            self.labels[-1].grid( column=0, row= fileNumber - (3 * page_number) + 1, sticky="N") # Place the label in where no label of the same page never placed
+            self.labels[-1].grid( column=0, row= fileNumber - (3 * self.max_page) + 1, sticky="N") # Place the label in where no label of the same page never placed
             self.labels[-1].grid_remove() # Hide the label
             
             fileNumber += 1
