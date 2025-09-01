@@ -88,6 +88,7 @@ class typing_tester_app(tkinter.Tk):
     def selectUpward(self, Page, event = None): # Move a cursor of the page upward
         if Page.cursor_position == 1:
             if Page.multiple_page == True and Page.page != 0:
+                Page.previous_page = Page.page
                 Page.page -= 1
                 Page.cursor_position = 3
             pass
@@ -108,6 +109,7 @@ class typing_tester_app(tkinter.Tk):
             Page.cursor_position = 3
         elif Page.cursor_position == 3:
             if Page.multiple_page == True and Page.max_page != Page.page:
+                Page.previous_page = Page.page
                 Page.page += 1
                 Page.cursor_position = 1
             pass
@@ -117,18 +119,16 @@ class typing_tester_app(tkinter.Tk):
         self.update_cursor(Page = Page)
         
     def update_cursor(self, Page, event = None):
+        
+        if Page.multiple_page == True:
+            if Page.previous_page != Page.page:
+                for i in range(3):
+                    Page.labels[ i + (3 * Page.previous_page) ].grid_remove()
+            Page.previous_page = Page.page
+            
         # reset all
         for i in range(3):
             Page.labels[ i + (3 * Page.page) ].grid() # Shows the labels which were hidden because it was not in the specific page.
-            
-        if Page.multiple_page == True: # If this page has multiple pages, it checks there is any 
-            if Page.cursor_position == 1 and Page.page != 0:
-                for i in range(3):
-                    Page.labels[ i + (3 * (Page.page - 1 )) ].grid_remove()
-                    
-            elif Page.cursor_position == 3 and Page.page == : ################################################################## I need to find the pattern when it changes the page from the lower page to higher page.
-                for i in range(3):
-                    Page.labels[ i + (3 * (Page.page + 1 )) ].grid_remove()
         
         for i in range(3):
             Page.labels[ i + (3 * Page.page) ].config(fg="black")
@@ -167,6 +167,7 @@ class MainPage(tk.Frame):
         
         tk.Frame.__init__(self, parent)
         self.page = 0
+        self.multiple_page = False # Let the interpreter know this frame does have only one page
         
         self.cursor_position = 1
         self.grid(column=0, row=0, sticky="nsew")
@@ -272,12 +273,8 @@ class FilePage(tk.Frame):
             
             fileNumber += 1
             
-            # if fileNumber % 3 != 0:
-            #     page_number = ( fileNumber // 3 ) + 1
-            # else:
-            #     page_number = ( fileNumber // 3 )
-        
-        self.page = 0
+        self.previous_page = 0 # Set the previous page as 0
+        self.page = 0 # Set the current page as 0
             
         controller.update_cursor(Page = self)
         
